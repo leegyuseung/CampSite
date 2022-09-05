@@ -3,6 +3,7 @@ const path = require("path");
 const mongoose = require("mongoose");
 const methodOverride = require("method-override");
 const CampGround = require("./models/campground");
+const ejsMate = require("ejs-mate");
 
 // mongoose & mongoDB
 async function main() {
@@ -22,6 +23,7 @@ const app = express();
 // express & ejs
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+app.engine("ejs", ejsMate);
 
 // parsing
 app.use(express.urlencoded({ extended: true }));
