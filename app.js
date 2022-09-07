@@ -6,6 +6,7 @@ const CampGround = require("./models/campground");
 const ejsMate = require("ejs-mate");
 const catchAsync = require("./utils/catchAsync");
 const ExpressError = require("./utils/ExpressError");
+const { campgroundSchema } = require("./schemas.js");
 // mongoose & mongoDB
 async function main() {
   await mongoose.connect("mongodb://localhost:27017/campsite");
@@ -31,12 +32,23 @@ app.use(express.urlencoded({ extended: true }));
 // method = put, delete 사용
 app.use(methodOverride("_method"));
 
+// JOI 유효성 검사 미들웨어
+const validateCampground = (req, res, next) => {
+  const { error } = campgroundSchema.validate(req.body);
+  if (error) {
+    const msg = error.details.map((el) => el.message).join(",");
+    throw new ExpressError(msg, 400);
+  } else {
+    next();
+  }
+};
+
 // home router
 app.get("/", (req, res) => {
   res.render("home");
 });
 
-// campgounds/index router
+// campgrounds/index router
 app.get(
   "/campgrounds",
   catchAsync(async (req, res) => {
@@ -55,9 +67,10 @@ app.get(
 
 app.post(
   "/campgrounds",
+  validateCampground,
   catchAsync(async (req, res, next) => {
-    if (!req.body.campground)
-      throw new ExpressError("Invalid Campground Data", 400);
+    // if (!req.body.campground)
+    //   throw new ExpressError("Invalid Campground Data", 400);
     const campground = new CampGround(req.body.campground);
     await campground.save();
     res.redirect(`/campgrounds/${campground._id}`);
@@ -84,6 +97,7 @@ app.get(
 
 app.put(
   "/campgrounds/:id",
+  validateCampground,
   catchAsync(async (req, res) => {
     const { id } = req.params;
     const campground = await CampGround.findByIdAndUpdate(id, {
